@@ -9,9 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
 
 
+
 class User extends Authenticatable
 {
     use  HasFactory, Notifiable, HasApiTokens;
+
 
     /**
      * The attributes that are mass assignable.
@@ -24,7 +26,9 @@ class User extends Authenticatable
         'email',
         'password',
         'phone_number',
-        'userrole_id'
+        'userrole_id',
+        'token',
+        'is_verified'
     ];
 
     /**
@@ -45,4 +49,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function rankinglist()
+    {
+        return $this->hasMany('App\Models\RankingList');
+    }
 }

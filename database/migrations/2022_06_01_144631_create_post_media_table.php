@@ -13,10 +13,10 @@ class CreatePostMediaTable extends Migration
      */
     public function up()
     {
-        Schema::create('post_media', function (Blueprint $table) {
+        Schema::create('postmedia', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('post_id');
-            $table->foreign('post_id')->references('id')->on('post');
+            $table->foreign('post_id')->references('id')->on('posts');
             $table->unsignedBigInteger('media_type_id');
             $table->foreign('media_type_id')->references('id')->on('media_type');
             $table->string('media_url');

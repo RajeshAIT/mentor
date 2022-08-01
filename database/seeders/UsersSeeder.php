@@ -17,7 +17,7 @@ class UsersSeeder extends Seeder
     public function run()
     {
 
-        DB::table('userRole')->insert([
+        DB::table('userrole')->insert([
 
             [
                 'name' => 'Mentor',

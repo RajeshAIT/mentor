@@ -17,12 +17,12 @@ class CreateUserprofileTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users');
-            $table->string('photo');
-            $table->string('title');
-            $table->text('about');
-            $table->string('experience');
-            $table->string('causes');
-            $table->string('recommandations');
+            $table->string('photo')->nullable();
+            $table->string('title')->nullable();
+            $table->text('about')->nullable();
+            $table->string('experience')->nullable();
+            $table->string('causes')->nullable();
+            $table->string('recommandations')->nullable();
             $table->timestamps();
         });
     }

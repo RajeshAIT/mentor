@@ -2,137 +2,53 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Company;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
+
+use App\Http\Requests\CompanyRequest;
+use App\Interfaces\CompanyInterface;
 
 class CompanyController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    protected $companyInterface;
+
+    public function __construct(CompanyInterface $companyInterface)
     {
-       //   $company = Company::all();
-       //   return response()->json($company);
+        $this->companyInterface = $companyInterface;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function show($id)
     {
-        //
+        return $this->companyInterface->getCompanyById($id);
+    }
+    
+    public function store(CompanyRequest $request)
+    {
+        return $this->companyInterface->requestCompany($request);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function websiteverify(Request $request)
     {
-        $data = $request->all();
-
-        $validator = Validator::make($data, [
-            'name' => 'required|max:255',
-            'logo' => 'required',
-            'description' => 'required|max:255',
-         //   'created_by' => 'required|max:255'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors(), 'error']);
-        }
-        $file = $request->file('logo');
-        $input['logo'] = time() . '.' . $file->getClientOriginalExtension();
-        $destinationPath = storage_path('public/logo/');
-        $file->move($destinationPath, $input['logo']);
-        $company = new Company();
-
-        $company->logo = $input['logo'];
-        $company->created_by = Auth::user()->id;
-        $company->name = $data['name'];
-        $company->description = $data['description'];
-        $company->save();
-        $logo = url('/api/image/' . $company->id);
-
-      $responseData['status']=true;
-      $companyCollection = array("logo" => $logo, "name" => $data['name'], "description" => $data['description']);
-      $responseData['data']=$companyCollection;
-      return response()->json($responseData);
+        return $this->companyInterface->requestWebsite($request);
     }
 
-    public function edit($id)
+    public function verify($token)
     {
-       $company = Company::find($id);
-      return response()->json($company);
+        return $this->companyInterface->verify($token);
     }
 
-    public function update(Request $request, $id)
+    public function companyVerify(Request $request)
     {
-
-        $data = $request->all();
-
-        $validator = Validator::make($data, [
-            'name' => 'required|max:255',
-            'logo' => 'required',
-            'description' => 'required|max:255',
-         //   'created_by' => 'required|max:255'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors(), 'error']);
-        }
-
-        $file = $request->file('logo');
-        $data['logo'] = time() . '.' . $file->getClientOriginalExtension();
-        $destinationPath = storage_path('public/logo/');
-        $file->move($destinationPath, $data['logo']);
-        //////$company = Company::where('id',$id)->first();
-
-        //$company->logo = $input['logo'];
-        //echo $input['logo'];
-        //$company->name = $data['name'];
-        //$company->description = $data['description'];
-        Company::whereid($id)->update($data);
-        $logo = url('/api/image/' . $id);
-
-      $responseData['status']=true;
-      $companyCollection = array("logo" => $logo, "name" => $data['name'], "description" => $data['description']);
-      $responseData['data']=$companyCollection;
-      return response()->json($responseData);
-
-     /*   $logoPath = public_path(). '/logo';
-        $data['logo'] = $logoPath;
-
-        $company = Company::find($id)->update($data);
-
-        return response()->json([
-            "success" => true,
-            "message" => "Updated Successfully",
-            "data" => $company
-            ]);  */
+        return $this->companyInterface->companyVerify($request, $request->token);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function invitepeople(Request $request)
     {
-     //   $company = Company::findOrFail($id);
-     //   $company->delete();
+        return $this->companyInterface->invitepeople($request);
+    }
 
-     //   return response()->json($company::all());
+    public function getpeople(Request $request)
+    {
+        return $this->companyInterface->getpeople($request);
     }
 }
