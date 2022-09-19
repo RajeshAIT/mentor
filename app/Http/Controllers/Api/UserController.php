@@ -2,93 +2,178 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Validator;
+use App\Interfaces\UserInterface;
 
+use App\Http\Requests\UserRequest;
+// Admin Profile request
+use App\Http\Requests\AdminRequest;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\FollowRequest;
 
 class UserController extends Controller
 {
+    protected $userInterface;
+
+    public function __construct(UserInterface $userInterface)
+    {
+        $this->userInterface = $userInterface;
+    }
+
     public function register(Request $request)
     {
-        $validator = validator::make($request->all(), [
-            'firstname' => 'required|min:3',
-            'lastname' => 'required|min:3',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-            'phonenumber' => 'required|min:10|numeric',
-            'fcm' => '',
-            'userrole_id' => 'required'
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'error' => $validator->errors()], 400);
-        }
-
-        $user = User::create([
-            'firstname' => $request->firstname,
-            'lastname' => $request->lastname,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
-            'phonenumber' => $request->phonenumber,
-            'userrole_id' => $request->userrole_id
-        ]);
-
-        $return['firstname'] = $request->firstname;
-        $return['lastname'] = $request->lastname;
-        $return['email'] = $request->email;
-        $return['password'] = $request->password;
-        $return['phonenumber'] = $request->phonenumber;
-        $return['fcm'] = $request->fcm;
-        $return['userrole_id'] = $request->userrole_id;
-
-
-        return response()->json(['status' => true, 'data' => $return], 200);
+        return $this->userInterface->register($request);
     }
 
-    /**
-     * Login Req
-     */
     public function login(Request $request)
     {
-        $validator = validator::make($request->all(), [
-
-            'email' => 'required|email',
-            'password' => 'required|min:6',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'error' => $validator->errors()], 400);
-        }
-
-
-        $data = [
-            'email' => $request->email,
-            'password' => $request->password
-        ];
-
-        if (auth()->attempt($data)) {
-            $token = auth()->user()->createToken('mentor')->accessToken;
-            return response()->json(['status' => true, 'data' => $token], 200);
-        } else {
-            return response()->json(['status' => false, 'error' => 'Unauthorised'], 401);
-        }
+        return $this->userInterface->login($request);
     }
 
-    // public function userInfo()
-    // {
-
-    //     $user = auth()->user();
-
-    //     return response()->json(['user' => $user], 200);
-    // }
     public function createpassword(Request $request)
     {
-        $validator = validator::make($request->all(), [
-            'password' => 'required|min8',
-            'confirmpassword' => 'required|samepassword'
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'error' => $validator->errors()], 400);
-        }
+        return $this->userInterface->createpassword($request);
     }
+
+    public function ProfileResponse(Request $request)
+   {
+       return $this->userInterface->ProfileResponse($request);
+   }
+
+    public function show($id)
+    {
+        return $this->userInterface->show($id);
+    }
+
+    public function changepassword(Request $request)
+    {
+        return $this->userInterface->changepassword($request);
+    }
+
+    public function logout()
+   {
+        return $this->userInterface->logout();
+   }
+
+    public function dashboard()
+    {
+        return $this->userInterface->dashboard();
+    }
+
+    public function create(Request $request)
+    {
+        return $this->userInterface->create($request);
+    }
+
+    public function store(UserRequest $request)
+    {
+        return $this->userInterface->storeUser($request);
+    }
+
+    public function mentor(Request $request)
+    {
+        return $this->userInterface->getMentor($request);
+    }
+
+    public function mentee()
+    {
+        return $this->userInterface->getMentee();
+    }
+
+    public function edit($id)
+    {
+        return $this->userInterface->edit($id);
+    }
+
+    public function update(UserRequest $request, $id)
+    {
+        return $this->userInterface->requestUser($request, $id);
+    }
+
+    public function destroy($id)
+    {
+        return $this->userInterface->deleteUser($id);
+    }
+
+    public function forgotpassword($token)
+    {
+        return $this->userInterface->forgotpassword($token);
+    }
+
+    public function resetpassword(Request $request)
+    {
+        return $this->userInterface->resetpassword($request);
+    }
+
+    public function updatepassword(Request $request)
+    {
+        return $this->userInterface->updatepassword($request);
+    }
+
+    public function follow(FollowRequest $request)
+    {
+        return $this->userInterface->follow($request);
+    }
+
+    public function getfollow()
+    {
+        return $this->userInterface->getfollow();
+    }
+
+    public function getunfollow()
+    {
+        return $this->userInterface->getunfollow();
+    }
+    //video report module
+    public function videoReport()
+    {
+        return $this->userInterface->videoReport();
+    }
+    public function videoDelete($id)
+    {
+        return $this->userInterface->videoDelete($id);
+    }
+    //video report module
+    //audio report module
+    public function postReport()
+    {
+        return $this->userInterface->postReport();
+    }
+    public function postDelete($id)
+    {
+        return $this->userInterface->postDelete($id);
+    }
+    //audio report module
+
+    //invalid email
+    public function invalidEmail(){
+        return $this->userInterface->invalidEmail();
+    }
+    //invalid email
+
+    //video url
+    public function videoURL($id){
+        return $this->userInterface->videoURL($id);
+    }
+    public function getMedia($id){
+        return $this->userInterface->getMedia($id);
+    }
+    //video url
+
+
+    //Admin profile dashboard
+    
+     public function userprofileedit($id)
+     {
+         return $this->userInterface->userprofileedit($id);
+     }
+     
+     public function updateprofile(AdminRequest $request, $id)
+     {
+         return $this->userInterface->requestUserprofile($request, $id);
+     }
+ 
+    
+     
 }

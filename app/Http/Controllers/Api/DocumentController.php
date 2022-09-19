@@ -25,8 +25,6 @@ class DocumentController extends Controller
     {
     $profileLogo=Post::where('id',$id)->pluck('logo')->first();
     $path = storage_path('public/logo/' . $profileLogo);
-    //echo $path;
-    //exit;
     if (!File::exists($path))
     {
         abort(404);

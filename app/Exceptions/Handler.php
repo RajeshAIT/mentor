@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Auth\AuthenticationException;
 
 class Handler extends ExceptionHandler
 {
@@ -25,13 +26,12 @@ class Handler extends ExceptionHandler
         'password_confirmation',
     ];
 
-    /**
-     * Register the exception handling callbacks for the application.
-     *
-     * @return void
-     */
-    public function register()
+    protected function unauthenticated($request, AuthenticationException $exception)
     {
-        //
+        if( $request->is('api/*')){
+            return response()->json(['status' => "false",'message' => $exception->getMessage()], 401);
+        }else{
+            return redirect("login")->with('message', 'User does not exist!');
+        }
     }
 }
