@@ -37,6 +37,7 @@ use App\Http\Requests\FollowRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\FirebaseAPI;
@@ -141,9 +142,9 @@ class UserRepository implements UserInterface
      {
        $validator = Validator::make($request->all(), [
         'id' => 'nullable',
-        'photo' => 'nullable',
         'title' => 'nullable',
         'about' => 'nullable',
+        'photo' => 'nullable',
         'experience' => 'nullable',
         'location' => 'nullable',
        ]);
@@ -173,6 +174,28 @@ class UserRepository implements UserInterface
           $input['photo']=null;
        }
 
+       $temp_user_details = UserProfile::where("user_id",auth()->user()->id)->first();
+
+        if($input['photo'] == null){
+        $input['photo'] = $temp_user_details->photo;
+        }
+
+        if(!$request->title){
+            $request->title = $temp_user_details->title;
+        }
+
+        if(!$request->about){
+            $request->about = $temp_user_details->about;
+        }
+
+        if(!$request->location){
+            $request->location = $temp_user_details->location;
+        }
+
+        if(!$request->experience){
+            $request->experience = $temp_user_details->experience;
+        }
+
         $post = UserProfile::updateOrCreate([
             'user_id' => auth()->user()->id
         ], [
@@ -183,7 +206,7 @@ class UserRepository implements UserInterface
             'location' => $request->location,
         ]);
 
-        if($request->photo){
+        if($input['photo'] != null){
             $photo = url('/api/user/profile/images/' . auth()->user()->id);
         } else {
             $photo = null;
@@ -384,12 +407,18 @@ class UserRepository implements UserInterface
 
     public function logout()
     {
+        $fcm = User::where('id', '=',Auth::user()->id)->update([
+            'fcm' => ""
+           ]);
+
        auth()->user()->token()->revoke();
        return response()->json(['status' => 'true', 'message' => 'Successfully logged out'], 200);
     }
 
     public function dashboard()
     {
+        $date_filter = Session::get('date_filter');
+         
         $dashboard =User::get();
         $total_mentor = DB::table('users')->where('userrole_id', "1")->count();
         $total_mentee = DB::table('users')->where('userrole_id', "2")->count();
@@ -398,16 +427,28 @@ class UserRepository implements UserInterface
         $total_answer = DB::table('answer')->count();
         $total_job = Post::where('post_type_id',"2")->count();
         $total_company = DB::table('companies')->count();
-
-        for ($i=0; $i<7; $i++)
-        {
-                $gettimes[] = date("Y-m-d", strtotime($i." days ago"));
-                sort($gettimes);
-                $getdays[] = date("Y-m-d D", strtotime($i." days ago"));
-                sort($getdays);
-        }
-
         
+if($date_filter =="thisweek" || !$ate_filter){
+    for ($i=0; $i<7; $i++)
+    {
+            $gettimes[] = date("Y-m-d", strtotime($i." days ago"));
+            sort($gettimes);
+            $getdays[] = date("Y-m-d D", strtotime($i." days ago"));
+            sort($getdays);
+    }
+}
+else  {
+    
+    for ($i=0; $i<7; $i++)
+    {
+            $j = $i+7;
+            $gettimes[] = date("Y-m-d", strtotime($j." days ago"));
+            sort($gettimes);
+            $getdays[] = date("Y-m-d D", strtotime($j." days ago"));
+            sort($getdays);
+    }
+
+}      
 
         for($i=0; $i<7; $i++){
 
@@ -449,7 +490,7 @@ class UserRepository implements UserInterface
                 $result[$cnt++]   = [$getdays[$i],$total_mentor_array[$i],$total_mentee_array[$i]];
             }
 
-        return view('pages.dashboard',compact('dashboard', 'total_mentor', 'total_mentee','total_post','total_question','total_answer','total_job','total_company','result'));
+        return view('pages.dashboard',compact('dashboard', 'total_mentor', 'total_mentee','total_post','total_question','total_answer','total_job','total_company','result','date_filter'));
     }
 
 
@@ -891,6 +932,34 @@ class UserRepository implements UserInterface
         ]);
         return redirect()->route('profileedit',$id)->with('message', 'AdminProfile has been updated Successfully.');
     }
-    
+
+    public function chartFilter($request)
+    {  
+
+        Session::put('date_filter',$request->barchart);
+        // $chart = session('date_filter');
+        // dd($request->barchart);
+
+        $charts = Session::get('date_filter');
+        // dd($charts);
+        
+        return 1;
+    }
+
+    public function mentorTagList($request){
+
+        $filter = $request->filter;
+        if($filter){
+            $mentor_details = User::where([[DB::raw("CONCAT(users.firstname, ' ', users.lastname)"),'like',"%$filter%"],["userrole_id","1"]])->select(DB::raw("CONCAT(users.firstname, ' ', users.lastname) as fullname"),'id')->get();
+        }else{
+            $mentor_details = User::where("userrole_id","1")->select(DB::raw("CONCAT(users.firstname, ' ', users.lastname) as fullname"),'id')->get();
+        }
+
+        $responseData["status"]          = true;
+        $responseData["data"]["mentors"] = $mentor_details;
+
+        return response()->json($responseData);
+
+    }
     
 }

@@ -882,7 +882,7 @@ class QuestionRepository implements QuestionInterface
 
             $data = UpVote::where('id',$upvote)->get();
 
-            $responseData['data']=null;
+            
             $responseData['status']=true;
             $responseData['message'] = "Downvote Successfully";
             return response()->json($responseData);
@@ -896,12 +896,6 @@ class QuestionRepository implements QuestionInterface
             $responseData['status']=true;
             $responseData['message'] = "Upvote Successfully";
 
-            $data = array(
-              "question_id" => $upvote_by['question_id'],
-              "upvote_by" => $upvote_by['upvote_by'],
-              "status" => $upvote_by['status']
-            );
-            $responseData['data']=$data;
         }
         return response()->json($responseData);
     }

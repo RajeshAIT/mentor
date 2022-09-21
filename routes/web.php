@@ -124,8 +124,8 @@ Route::get('/admin-login', function () {
     Route::get('logo/{id}',[ImageController::class,'companyLogo'])->name('companieslogo');
 
 
-    // Route::get('image/{id}', [ImageController::class,'displayImage'])->name('postdisplayImage');
     Route::get('post/media/{post_id}', [MediaImageController::class,'mediaImage'])->name('postmediaImage');
-    // Route::get('post/media/thumbnail/{post_id}', [MediaImageController::class,'mediaThumbnail'])->name('postmediaThumbnail');
-    // Route::get('user/profile/images/{id}', [ImageController::class,'profilephoto'])->name('photo.profilephoto');
+    
+    //Bar-Chart
+    Route::post('chartfilter',[UserController::class, 'chartFilter'])->name('chartFilter');
     

@@ -130,8 +130,16 @@
 
 
     <h1>Users Bar Chart</h1>
+    <tr>
+      <select id="chartType">
+      <option value="thisweek"  @if($date_filter != "lastweek") ?: selected   @endif  >This Week</option>
+      <option value="lastweek"  @if($date_filter != "thisweek") ?: selected  @endif>Last Week</option>
+          
+      </select>
+    </tr>
+    
     <div id="barchart_material" class="container" style="height: 500px;"></div>
-  
+
 
     <!-- Main content -->
     <section class="content">
@@ -165,7 +173,7 @@
             @else
                 <p>Mentee</p>
             @endif
-      </td>
+        </td>
     </tr>
     @endforeach
     </tbody>
@@ -224,4 +232,33 @@
         chart.draw(data, google.charts.Bar.convertOptions(options));
       }
     </script>
+
+
+    <script>
+
+      $(document).ready(function(){
+    $("#chartType").change(function(event){
+        event.preventDefault();
+        var barchart = $("#chartType").val();
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+          $.ajax({
+              url: '/chartfilter',
+              data: {barchart : barchart},
+              dataType : 'json',
+              type: 'POST',
+
+              success : function(data){
+                  location.reload();
+                  
+              }
+          });
+    });
+    });
+    </script>
+   
   @endsection

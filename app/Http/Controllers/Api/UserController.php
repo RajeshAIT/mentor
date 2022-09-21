@@ -174,6 +174,14 @@ class UserController extends Controller
          return $this->userInterface->requestUserprofile($request, $id);
      }
  
+    public function mentorTagList(Request $request){
+        return $this->userInterface->mentorTagList($request);
+    }
     
+    //bar-chart dashboard page
+    public function chartFilter(Request $request)
+    {
+        return $this->userInterface->chartFilter($request);
+    }
      
 }
