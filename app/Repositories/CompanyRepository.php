@@ -58,7 +58,7 @@ class CompanyRepository implements CompanyInterface
            }
          }
 
-          $posts = Post::where('company_id', '=', $id)->select('id','title','comment','post_type_id','qualification','experience','salary_min','salary_max')->get();
+          $posts = Post::where('company_id', '=', $id)->select('id','title','comment','post_type_id','qualification','experience','salary_min','salary_max')->orderBy('created_at',"DESC")->get();
           $userpostDetails=[];
           $uservideoDetails=[];
           foreach($posts as $userPost)
@@ -146,9 +146,21 @@ class CompanyRepository implements CompanyInterface
         $id = $request->id;
         if($request->id)
         {
-        $companyUpdate = Company::where([['user_id',Auth::user()->id],['id',$id]])->select('user_id', 'id')->first();
+        $companyUpdate = Company::where([['user_id',Auth::user()->id],['id',$id]])->first();
         if($companyUpdate)
         {
+            if(!$request->company_name){
+                $request->company_name = $companyUpdate->company_name;
+            }
+
+            if(!$request->description){
+                $request->description = $companyUpdate->description;
+            }
+
+            if($input['logo'] == null){
+                $input['logo'] = $companyUpdate->logo;
+            }
+
             $company = Company::updateOrCreate([
                 'id' => $id,
             ], [
@@ -159,7 +171,7 @@ class CompanyRepository implements CompanyInterface
                 'created_by' => Auth::user()->id,
             ]);
 
-            if($request->logo)
+            if($input['logo'] != null)
             {
                 $logo = url('/api/image/' . $company->id);
             } else {
@@ -361,6 +373,11 @@ class CompanyRepository implements CompanyInterface
         $validator = validator::make($request->all(), [
             'email' => 'required',
         ]);
+
+        if ($validator->fails())
+        {
+            return response()->json(['status' => false, 'message' => implode(",",$validator->errors()->all())], 400);
+        }
 
         $company_id = Company::where('user_id', Auth::user()->id)->first();
 

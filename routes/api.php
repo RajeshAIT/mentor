@@ -97,6 +97,10 @@ Route::group(['middleware' => ['auth:api']], function () {
     Route::post('notification/list',[NotificationController::class,'notificationList']);
     Route::get('notification/seen/{id}',[NotificationController::class,'updateNotification']);
     //notification list
+
+    //notification list
+    Route::post('tag/mentor/list',[UserController::class,'mentorTagList']);
+    //notification list
 });
 
 Route::get('image/{id}', [ImageController::class,'displayImage'])->name('logo.displayImage');

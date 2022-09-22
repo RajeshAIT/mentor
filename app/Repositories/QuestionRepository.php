@@ -16,6 +16,7 @@ use App\Models\TopKeywords;
 use App\Models\UserProfile;
 use App\Traits\ResponseAPI;
 use App\Models\UserReaction;
+use App\Models\Tagmentor;
 //video report module
 use App\Models\Videoreport;
 use App\Models\Videoreportcontent;
@@ -52,6 +53,7 @@ class QuestionRepository implements QuestionInterface
 
       $badge = null;
       $question_count = 0;
+      $points         = 15;
       
       $question = Question::create([
         'question' => $request->question,
@@ -63,9 +65,24 @@ class QuestionRepository implements QuestionInterface
 
       if($question->id)
       {
+          $tag_mentors = $request->mentor_list;
+
+          if($tag_mentors){
+            foreach($tag_mentors as $mentor_id){
+              Tagmentor::create([
+                "mentor_id" => $mentor_id,
+                "question_id" => $question->id,
+                "tagged_by" => Auth::user()->id
+              ]);
+            }
+
+            $points = $points + 1;
+            self::TagMentorNotification($question->id);
+          }
+
           $points = RankingList::create([
               'user_id' => Auth::user()->id,
-              'points' => 15,
+              'points' => $points,
               'reasons' => "Question",
           ]);
 
@@ -840,7 +857,7 @@ class QuestionRepository implements QuestionInterface
     $questionCollection=Question::where('id',$id)->pluck('question')->first();
     $userDetails=User::where('id',$id)->first();
     $questionDetails['question']=$questionCollection;
-    $answerCollections = Answer::where('question_id',$id)->get();
+    $answerCollections = Answer::where('question_id',$id)->orderBy("created_at","DESC")->get();
     $answerDetails=[];
     $questionDetails['answer_list']=[];
 
@@ -882,10 +899,10 @@ class QuestionRepository implements QuestionInterface
 
             $data = UpVote::where('id',$upvote)->get();
 
-            $responseData['data']=null;
+            
             $responseData['status']=true;
             $responseData['message'] = "Downvote Successfully";
-            return response()->json($responseData);
+            
         }else {
             $upvote_by = Upvote::create([
               'question_id' => $request->question_id,
@@ -896,12 +913,6 @@ class QuestionRepository implements QuestionInterface
             $responseData['status']=true;
             $responseData['message'] = "Upvote Successfully";
 
-            $data = array(
-              "question_id" => $upvote_by['question_id'],
-              "upvote_by" => $upvote_by['upvote_by'],
-              "status" => $upvote_by['status']
-            );
-            $responseData['data']=$data;
         }
         return response()->json($responseData);
     }
