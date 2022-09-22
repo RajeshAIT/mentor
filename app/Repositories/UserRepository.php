@@ -18,6 +18,7 @@ use App\Models\UserProfile;
 //post report module
 use App\Models\UserSession;
 use App\Models\Videoreport;
+use App\Models\Notification;
 
 //post report module
 //save question module
@@ -37,9 +38,11 @@ use App\Http\Requests\FollowRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\FirebaseAPI;
+use DateTime;
 
 class UserRepository implements UserInterface
 {
@@ -141,9 +144,9 @@ class UserRepository implements UserInterface
      {
        $validator = Validator::make($request->all(), [
         'id' => 'nullable',
-        'photo' => 'nullable',
         'title' => 'nullable',
         'about' => 'nullable',
+        'photo' => 'nullable',
         'experience' => 'nullable',
         'location' => 'nullable',
        ]);
@@ -173,6 +176,28 @@ class UserRepository implements UserInterface
           $input['photo']=null;
        }
 
+       $temp_user_details = UserProfile::where("user_id",auth()->user()->id)->first();
+
+        if($input['photo'] == null){
+        $input['photo'] = $temp_user_details->photo;
+        }
+
+        if(!$request->title){
+            $request->title = $temp_user_details->title;
+        }
+
+        if(!$request->about){
+            $request->about = $temp_user_details->about;
+        }
+
+        if(!$request->location){
+            $request->location = $temp_user_details->location;
+        }
+
+        if(!$request->experience){
+            $request->experience = $temp_user_details->experience;
+        }
+
         $post = UserProfile::updateOrCreate([
             'user_id' => auth()->user()->id
         ], [
@@ -183,7 +208,7 @@ class UserRepository implements UserInterface
             'location' => $request->location,
         ]);
 
-        if($request->photo){
+        if($input['photo'] != null){
             $photo = url('/api/user/profile/images/' . auth()->user()->id);
         } else {
             $photo = null;
@@ -338,10 +363,15 @@ class UserRepository implements UserInterface
 
             $profileDetails['saved_questions_list']=$saved_question;
             //save question module
-       }
+        }
+
+        $notification_list = Notification::where([["seen","0"],["user_id",Auth::user()->id]])->get();
+
+        $notification_cnt = count($notification_list);
 
         $responseData['status']=true;
         $responseData['message']='Successful';
+        $responseData["unseen_cnt"] = $notification_cnt;
         $responseData['data']=$profileDetails;
         return response()->json($responseData);
         
@@ -384,12 +414,18 @@ class UserRepository implements UserInterface
 
     public function logout()
     {
+        $fcm = User::where('id', '=',Auth::user()->id)->update([
+            'fcm' => ""
+           ]);
+
        auth()->user()->token()->revoke();
        return response()->json(['status' => 'true', 'message' => 'Successfully logged out'], 200);
     }
 
     public function dashboard()
     {
+        $date_filter = Session::get('date_filter');
+         
         $dashboard =User::get();
         $total_mentor = DB::table('users')->where('userrole_id', "1")->count();
         $total_mentee = DB::table('users')->where('userrole_id', "2")->count();
@@ -399,17 +435,81 @@ class UserRepository implements UserInterface
         $total_job = Post::where('post_type_id',"2")->count();
         $total_company = DB::table('companies')->count();
 
-        for ($i=0; $i<7; $i++)
-        {
-                $gettimes[] = date("Y-m-d", strtotime($i." days ago"));
-                sort($gettimes);
-                $getdays[] = date("Y-m-d D", strtotime($i." days ago"));
-                sort($getdays);
-        }
 
-        
 
-        for($i=0; $i<7; $i++){
+
+// prevoius month of 07 
+// for ($i = 1; $i <= 31; $i++) 
+// {
+//          $newdate[] = date("Y-m-d D", strtotime("-1 months", strtotime(date("Y-m")."$i days ago")));
+// sort($newdate);
+//         }
+// dd($newdate);
+
+
+
+//current week of filter 7 days
+if($date_filter =="thisweek" || !$date_filter){
+    for ($i=0; $i<7; $i++)
+    {
+            $gettimes[] = date("Y-m-d", strtotime($i." days ago"));
+            sort($gettimes);
+            $getdays[] = date("Y-m-d D", strtotime($i." days ago"));
+            sort($getdays);
+    }
+    // dd($gettimes);
+}
+//previous week of filter 7 days
+
+elseif($date_filter =="lastweek" || !$date_filter)  {
+    
+    for ($i=0; $i<7; $i++)
+    {
+            $j = $i+7;
+            $gettimes[] = date("Y-m-d", strtotime($j." days ago"));
+            sort($gettimes);
+            $getdays[] = date("Y-m-d D", strtotime($j." days ago"));
+            sort($getdays);
+    }
+    // dd($gettimes);
+
+// current month of filter 30 days
+    
+}elseif($date_filter =="thismonth"  ){
+    for($d=1; $d<=31; $d++)
+{
+    $time=mktime(12, 0, 0, date('m'), $d, date('Y'));
+    if (date('m', $time)==date('m'))
+    $gettimes[]=date('Y-m-d', $time);
+
+    $time=mktime(12, 0, 0, date('m'), $d, date('Y'));
+    if (date('m', $time)==date('m'))
+    $getdays[]=date('d', $time);
+}
+// dd($gettimes);
+// previous month of filter 30 days
+
+}
+elseif($date_filter =="lastmonth" )  
+{
+    
+    for ($i = 1; $i <= 31; $i++) {
+    $gettimes[] = date("Y-m-d", strtotime( date( 'Y-m-01' )." $i days ago"));
+    sort($gettimes);
+
+    $getdays[] = date("d", strtotime( date( 'Y-m-01' )." $i days ago"));
+    sort($getdays);
+    }
+     
+
+}
+
+// $week_month = count($gettimes);
+// dd($week_month);
+
+        for($i=0; $i<count($gettimes); $i++){
+// $week_month = count($gettimes);
+
 
             $total_hours_mentor =0;
             $total_hours_mentee =0;
@@ -436,20 +536,43 @@ class UserRepository implements UserInterface
             $logout_time = $menteehours->logout_time;
             $menteehours = round((strtotime($logout_time) - strtotime($login_time))/3600, 1);
             $total_hours_mentee = $total_hours_mentee + $menteehours;
+        //  dd($login_time);
+
          }
 
             $total_mentor_array[$i] = $total_hours_mentor;
             $total_mentee_array[$i] = $total_hours_mentee;
        }
+// dd($total_hours_mentor);
+            if($date_filter == "thismonth" || $date_filter == "lastmonth"){
+                if($date_filter == "thismonth"){
+                    $month_num = date('n');
+                }else{
+                    $month_num = date('n');
+                    $month_num = $month_num - 1;
 
-            $result[] = ['Weeks','Mentor','Mentee',];
-
-            $cnt =1;
-            for($i=0; $i<7; $i++){
-                $result[$cnt++]   = [$getdays[$i],$total_mentor_array[$i],$total_mentee_array[$i]];
+                    if($month_num == 0){
+                       $month_num  =  12; 
+                    }
+                }
+                
+                $dateObj   = DateTime::createFromFormat('!m', $month_num);
+                $monthName = $dateObj->format('F'); // March
+                $result[] = [$monthName,'Mentor','Mentee',];
+            }else{
+                $result[] = ['Weeks','Mentor','Mentee',];
             }
 
-        return view('pages.dashboard',compact('dashboard', 'total_mentor', 'total_mentee','total_post','total_question','total_answer','total_job','total_company','result'));
+
+        $cnt =1;
+        for($i=0; $i<count($gettimes); $i++){
+            $result[$cnt++]   = [$getdays[$i],$total_mentor_array[$i],$total_mentee_array[$i]];
+        }
+    
+
+
+            
+        return view('pages.dashboard',compact('dashboard', 'total_mentor', 'total_mentee','total_post','total_question','total_answer','total_job','total_company','result','date_filter'));
     }
 
 
@@ -891,6 +1014,32 @@ class UserRepository implements UserInterface
         ]);
         return redirect()->route('profileedit',$id)->with('message', 'AdminProfile has been updated Successfully.');
     }
-    
+
+    public function chartFilter($request)
+    {  
+
+        $req = Session::put('date_filter',$request->barchart);
+        $charts = Session::get('date_filter',);
+        // $reqs = Session::put('month_filter',$request->barchart);
+        // $chartss = Session::get('month_filter');
+        
+        return 1;
+    }
+
+    public function mentorTagList($request){
+
+        $filter = $request->filter;
+        if($filter){
+            $mentor_details = User::where([[DB::raw("CONCAT(users.firstname, ' ', users.lastname)"),'like',"%$filter%"],["userrole_id","1"]])->select(DB::raw("CONCAT(users.firstname, ' ', users.lastname) as fullname"),'id')->get();
+        }else{
+            $mentor_details = User::where("userrole_id","1")->select(DB::raw("CONCAT(users.firstname, ' ', users.lastname) as fullname"),'id')->get();
+        }
+
+        $responseData["status"]          = true;
+        $responseData["data"]["mentors"] = $mentor_details;
+
+        return response()->json($responseData);
+
+    }
     
 }

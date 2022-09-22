@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Follow;
 use App\Models\Notification;
 use App\Models\UserReaction;
+use App\Models\Tagmentor;
 use Illuminate\Support\Facades\Auth;
 
 trait FirebaseAPI
@@ -330,5 +331,88 @@ trait FirebaseAPI
         }
 
         
+    }
+
+    public function TagMentorNotification($question_id){
+
+        $user_id = Auth::user()->id;
+
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        
+        $serverKey = env('FIREBASE_SEC_KEY');
+        
+        $FcmToken = Tagmentor::where([["tagmentors.question_id",$question_id],["tagged_by",$user_id]])
+                            ->leftjoin("users","tagmentors.mentor_id","users.id")
+                            ->pluck("users.fcm")->all();
+
+        
+        //$FcmToken = User::where('id',$question_details->created_by)->pluck('fcm')->all();
+
+        $user_details = User::where("id",$user_id)->first();
+        $firstname    = $user_details->firstname;
+        $lastname     = $user_details->lastname;
+
+        $org_name     = $firstname." ".$lastname;
+
+        
+        $title = 'Tagged in the Question';
+        $body  = $org_name.' Mentee Tagged in New Question';
+
+        $data = [
+            "registration_ids" => $FcmToken,
+            "content_available" => true,  
+            "notification" => [
+                "title" => $title,
+                "body" => $body,
+                "icon" => asset("dist/img/AdminLTELogo.png"),
+                "id" => "10",
+                "sound" => "default" 
+            ]
+        ];
+        $encodedData = json_encode($data);
+        
+        $headers = [
+            'Authorization:key=' . $serverKey,
+            'Content-Type: application/json',
+        ];
+    
+        $ch = curl_init();
+      
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+        // Disabling SSL Certificate support temporarly
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);        
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedData);
+
+        // Execute post
+        $result = curl_exec($ch);
+
+        if ($result === FALSE) {
+            die('Curl failed: ' . curl_error($ch));
+        }        
+	
+        // Close connection
+        curl_close($ch);
+
+        $user_ids = Tagmentor::where([["tagmentors.question_id",$question_id],["tagged_by",$user_id]])
+                    ->leftjoin("users","tagmentors.mentor_id","users.id")
+                    ->pluck("users.id")->all();
+        
+        for($i=0;$i<count($user_ids); $i++){
+
+            Notification::create([
+                "user_id" => $user_ids[$i],
+                "question_id" => $question_id,
+                "notification_type" => "Tag_mentor",
+                "seen" => 0,
+                "title" => $title,
+                "body" => $body
+            ]);
+
+        }
     }
 }

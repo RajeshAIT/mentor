@@ -130,8 +130,18 @@
 
 
     <h1>Users Bar Chart</h1>
+    <tr>
+      <select id="chartType">
+      <option value="thisweek"  @if($date_filter == "thisweek") ?: selected   @endif  >This Week</option>
+      <option value="lastweek"  @if($date_filter == "lastweek") ?: selected  @endif>Last Week</option>
+
+      <option value="thismonth"  @if($date_filter == "thismonth") ?: selected   @endif  >This Month</option>
+      <option value="lastmonth"  @if($date_filter == "lastmonth") ?: selected  @endif>Last Month</option>
+      </select>
+    </tr>
+    
     <div id="barchart_material" class="container" style="height: 500px;"></div>
-  
+
 
     <!-- Main content -->
     <section class="content">
@@ -148,12 +158,12 @@
                  
                 <table id="example1"  class="table table-bordered table-striped">
                   <thead>
-    <tr>
-        <th>Name</th>    
-        <th>Email</th>   
-        <th>Role Name</th>
-    </tr>
-    </thead>
+                      <tr>
+                            <th>Name</th>    
+                            <th>Email</th>   
+                            <th>Role Name</th>
+                      </tr>
+                  </thead>
     <tbody>
         @foreach($dashboard as $users)
     <tr>
@@ -165,7 +175,7 @@
             @else
                 <p>Mentee</p>
             @endif
-      </td>
+        </td>
     </tr>
     @endforeach
     </tbody>
@@ -224,4 +234,35 @@
         chart.draw(data, google.charts.Bar.convertOptions(options));
       }
     </script>
+
+
+    <script>
+
+      $(document).ready(function(){
+    $("#chartType").change(function(event){
+        event.preventDefault();
+        var barchart = $("#chartType").val();
+        // alert(barchart);
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+          $.ajax({
+              url: '/chartfilter',
+              data: {barchart : barchart},
+              dataType : 'json',
+              type: 'POST',
+              success : function(data){
+// alert(data);
+
+                  location.reload();
+                  
+              }
+          });
+    });
+    });
+    </script>
+   
   @endsection

@@ -77,8 +77,9 @@ interface UserInterface
 
   public function requestUserprofile(AdminRequest $request, $id);
 
-  // Company Report
-  // public function companyReport();
-  // public function companyDelete($id);
+  // mwntor tags list
+  public function mentorTagList($request);
   
+  //chart filter
+  public function chartFilter($request);
 }
