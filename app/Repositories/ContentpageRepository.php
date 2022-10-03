@@ -113,7 +113,7 @@ class ContentpageRepository implements ContentpageInterface
     public function keywordSearch($request){
         
       
-      return response()->json($responsedData);
+      //return response()->json($responsedData);
 
     }
 
@@ -127,7 +127,7 @@ class ContentpageRepository implements ContentpageInterface
 
     public function contentPages(){
 
-      $content_pages = Contentpage::select("url_title","page_title")->get();
+      $content_pages = Contentpage::select("url_title","page_title")->orderBy('created_at','DESC')->get();
 
       $content_page_array = array();
       $cnt = 0;

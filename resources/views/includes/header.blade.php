@@ -9,6 +9,12 @@
   
   <title>Admin</title>
 
+  <!--Date Picker dashboard chart-bar-->
+  <!-- <link rel="stylesheet" href="../assets/vendor/daterangepicker/daterangepicker.css"> -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+
+
   <!-- DataTables -->
   <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
   <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
@@ -113,7 +119,7 @@
 <script src="{{ asset ('dist/js/adminlte.js') }}"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="{{ asset ('dist/js/demo.js') }}"></script>
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+<!-- AdminLTE dashboard demo (This is only for demo purpose) -->
 <script src="{{ asset ('dist/js/pages/dashboard.js') }}"></script>
 
 <!-- DataTables  & Plugins -->
@@ -129,6 +135,7 @@
 <script src="{{ asset ('plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
 <script src="{{ asset ('plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
 <script src="{{ asset ('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
+
 
 </body>
 </html>

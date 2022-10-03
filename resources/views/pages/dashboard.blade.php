@@ -11,12 +11,6 @@
           <div class="col-sm-6">
             <h1 class="m-0">Dashboard</h1>
           </div><!-- /.col -->
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="/dashboard">Home</a></li>
-              <li class="breadcrumb-item active">Dashboard</li>
-            </ol>
-          </div><!-- /.col -->
         </div><!-- /.row -->
       </div><!-- /.container-fluid -->
     </div>
@@ -137,8 +131,15 @@
 
       <option value="thismonth"  @if($date_filter == "thismonth") ?: selected   @endif  >This Month</option>
       <option value="lastmonth"  @if($date_filter == "lastmonth") ?: selected  @endif>Last Month</option>
-      </select>
+      <option value="customrange"  @if( $date_filter != "thisweek" && $date_filter != "lastweek" && $date_filter != "thismonth" && $date_filter != "lastmonth")?: selected  @endif>Custom Range</option>
+    </select>
     </tr>
+
+    @if( $date_filter != "thisweek" && $date_filter != "lastweek" && $date_filter != "thismonth" && $date_filter != "lastmonth") 
+      <div id="dvPassport"  >
+          <input type="text" value="<?php {echo $date_filter;}?>"  disabled="disabled" />
+      </div>
+@endif
     
     <div id="barchart_material" class="container" style="height: 500px;"></div>
 
@@ -153,7 +154,7 @@
                 <h3 class="card-title">Users Report</h3>
               </div>
               
-              <!-- /.card-header -->
+              <!-- /.card-header-->
               <div class="card-body">
                  
                 <table id="example1"  class="table table-bordered table-striped">
@@ -164,21 +165,21 @@
                             <th>Role Name</th>
                       </tr>
                   </thead>
-    <tbody>
-        @foreach($dashboard as $users)
-    <tr>
-        <td>{{$users->firstname}} {{$users->lastname}}</td>
-        <td>{{$users->email}}</td>
-        <td> 
-            @if ($users->userrole_id == 1)
-                <p>Mentor</p>
-            @else
-                <p>Mentee</p>
-            @endif
-        </td>
-    </tr>
-    @endforeach
-    </tbody>
+                  <tbody>
+                        @foreach($dashboard as $users)
+                      <tr>
+                            <td>{{$users->firstname}} {{$users->lastname}}</td>
+                            <td>{{$users->email}}</td>
+                            <td> 
+                                @if ($users->userrole_id == 1)
+                                    <p>Mentor</p>
+                                @else
+                                    <p>Mentee</p>
+                                @endif
+                            </td>
+                      </tr>
+                        @endforeach
+                  </tbody>
                 </table>
               </div>
               <!-- /.card-body -->
@@ -235,15 +236,47 @@
       }
     </script>
 
-
-    <script>
-
-      $(document).ready(function(){
-    $("#chartType").change(function(event){
+  <script>
+    $(document).ready(function(){
+      $("#chartType").change(function(event){
         event.preventDefault();
         var barchart = $("#chartType").val();
         // alert(barchart);
-        $.ajaxSetup({
+if(barchart =='thisweek' || barchart =='lastweek' || barchart =='thismonth' || barchart =='lastmonth' ){
+
+  $.ajaxSetup({
+                headers: {
+                      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                          }
+          });
+  $.ajax({
+              url: '/chartfilter',
+              data: {barchart : barchart,
+                      },
+              dataType : 'json',
+              type: 'POST',
+              success : function(data){
+                  location.reload();
+              }
+          });
+}    
+else if(barchart == "customrange"){
+ 
+  $('#chartType').daterangepicker({
+      autoUpdateInput: false,
+      locale: {
+          cancelLabel: 'Clear'
+      }
+      
+  });
+  
+   $("#chartType").on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('YYYY-MM-DD') + ' / ' + picker.endDate.format('YYYY-MM-DD'));
+      var barchart = picker.startDate.format('YYYY-MM-DD') + ' / ' + picker.endDate.format('YYYY-MM-DD');
+      
+      $("#dvPassport").show();
+      
+      $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
@@ -251,18 +284,22 @@
 
           $.ajax({
               url: '/chartfilter',
-              data: {barchart : barchart},
+              data: {barchart : barchart
+                      },
               dataType : 'json',
               type: 'POST',
               success : function(data){
-// alert(data);
-
                   location.reload();
-                  
               }
           });
-    });
-    });
-    </script>
-   
+          // alert(data);
+  });
+
+  $('#chartType').on('cancel.daterangepicker', function (ev, picker) {
+  $("#dvPassport").val('');
+  });
+}
+});
+});
+  </script>
   @endsection

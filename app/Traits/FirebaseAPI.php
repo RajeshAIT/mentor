@@ -29,6 +29,10 @@ trait FirebaseAPI
 
         $org_name     = $firstname." ".$lastname;
 
+        $unseen     = Notification::where([["user_id",Auth::user()->id],["seen","0"]])->get();
+        $seen       = Notification::where([["user_id",Auth::user()->id],["seen","1"]])->get();
+        $unseen_cnt = count($unseen);
+        $seen_cnt   = count($seen);
         
         $title = 'Question Created';
         $body  = $org_name.' Mentee Posted a New Question';
@@ -42,6 +46,10 @@ trait FirebaseAPI
                 "icon" => asset("dist/img/AdminLTELogo.png"),
                 "id" => "10",
                 "sound" => "default" 
+            ],
+            "data" => [
+                "unseen_cnt" => $unseen_cnt,
+                "seen_cnt" => $seen_cnt
             ]
         ];
         $encodedData = json_encode($data);
@@ -110,6 +118,10 @@ trait FirebaseAPI
 
         $org_name     = $firstname." ".$lastname;
 
+        $unseen     = Notification::where([["user_id",Auth::user()->id],["seen","0"]])->get();
+        $seen       = Notification::where([["user_id",Auth::user()->id],["seen","1"]])->get();
+        $unseen_cnt = count($unseen);
+        $seen_cnt   = count($seen);
         
         $title = 'Got the Answer';
         $body  = $org_name.' Mentor Answered your Question';
@@ -123,6 +135,10 @@ trait FirebaseAPI
                 "icon" => asset("dist/img/AdminLTELogo.png"),
                 "id" => "10",
                 "sound" => "default" 
+            ],
+            "data" => [
+                "unseen_cnt" => $unseen_cnt,
+                "seen_cnt" => $seen_cnt
             ]
         ];
         $encodedData = json_encode($data);
@@ -191,6 +207,10 @@ trait FirebaseAPI
 
         $org_name     = $firstname." ".$lastname;
 
+        $unseen     = Notification::where([["user_id",Auth::user()->id],["seen","0"]])->get();
+        $seen       = Notification::where([["user_id",Auth::user()->id],["seen","1"]])->get();
+        $unseen_cnt = count($unseen);
+        $seen_cnt   = count($seen);
         
         $title = 'Got the Reaction';
         $body  = $org_name.' Mentee Reacted your Answer';
@@ -204,6 +224,10 @@ trait FirebaseAPI
                 "icon" => asset("dist/img/AdminLTELogo.png"),
                 "id" => "10",
                 "sound" => "default" 
+            ],
+            "data" => [
+                "unseen_cnt" => $unseen_cnt,
+                "seen_cnt" => $seen_cnt
             ]
         ];
         $encodedData = json_encode($data);
@@ -262,6 +286,10 @@ trait FirebaseAPI
         
         $follow_details = Follow::where([['mentor_id',$mentor_id],['mentee_id',$mentee_id],['status',1]])->select('id')->first();
 
+        $unseen     = Notification::where([["user_id",Auth::user()->id],["seen","0"]])->get();
+        $seen       = Notification::where([["user_id",Auth::user()->id],["seen","1"]])->get();
+        $unseen_cnt = count($unseen);
+        $seen_cnt   = count($seen);
 
         $FcmToken = User::where('id',$mentor_id)->pluck('fcm')->all();
 
@@ -284,6 +312,10 @@ trait FirebaseAPI
                 "icon" => asset("dist/img/AdminLTELogo.png"),
                 "id" => "10",
                 "sound" => "default" 
+            ],
+            "data" => [
+                "unseen_cnt" => $unseen_cnt,
+                "seen_cnt" => $seen_cnt
             ]
         ];
         $encodedData = json_encode($data);
@@ -354,6 +386,10 @@ trait FirebaseAPI
 
         $org_name     = $firstname." ".$lastname;
 
+        $unseen     = Notification::where([["user_id",Auth::user()->id],["seen","0"]])->get();
+        $seen       = Notification::where([["user_id",Auth::user()->id],["seen","1"]])->get();
+        $unseen_cnt = count($unseen);
+        $seen_cnt   = count($seen);
         
         $title = 'Tagged in the Question';
         $body  = $org_name.' Mentee Tagged in New Question';
@@ -367,6 +403,10 @@ trait FirebaseAPI
                 "icon" => asset("dist/img/AdminLTELogo.png"),
                 "id" => "10",
                 "sound" => "default" 
+            ],
+            "data" => [
+                "unseen_cnt" => $unseen_cnt,
+                "seen_cnt" => $seen_cnt
             ]
         ];
         $encodedData = json_encode($data);
