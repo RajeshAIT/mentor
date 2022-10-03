@@ -19,9 +19,16 @@ class NotificationRepository implements NotificationInterface
     public function notificationList(){
 
       $notification_list = Notification::where("user_id",Auth::user()->id)->orderBy('created_at','DESC')->get();
+      
+      $unseen     = Notification::where([["user_id",Auth::user()->id],["seen","0"]])->get();
+      $seen       = Notification::where([["user_id",Auth::user()->id],["seen","1"]])->get();
+      $unseen_cnt = count($unseen);
+      $seen_cnt   = count($seen);
 
       $responseData["status"]  = true;
       $responseData["message"] = "Notification retrived Successfully";
+      $responseData["seen"] = $seen_cnt;
+      $responseData["unseen"] = $unseen_cnt;
       $responseData["data"]["notification_list"]    = $notification_list;
         
       return response()->json($responseData);

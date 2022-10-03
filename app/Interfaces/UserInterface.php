@@ -77,9 +77,11 @@ interface UserInterface
 
   public function requestUserprofile(AdminRequest $request, $id);
 
-  // mwntor tags list
+  // mentor tags list
   public function mentorTagList($request);
   
   //chart filter
   public function chartFilter($request);
+
+ 
 }

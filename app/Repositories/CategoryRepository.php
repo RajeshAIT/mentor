@@ -17,9 +17,9 @@ class CategoryRepository implements CategoryInterface
   public function categorizethequestion()
   {
     try {
-        $data['category'] = Category::select('id','job_title as label')->get();
-        $data['emotion'] = Emotion::select('id','emotion as label')->get();
-        $data['QuestionAssociation'] = QuestionAssociation::select('id','question_association as label')->get();
+        $data['category'] = Category::select('id','job_title as label')->orderBy("label","ASC")->get();
+        $data['emotion'] = Emotion::select('id','emotion as label')->orderBy("label","ASC")->get();
+        $data['QuestionAssociation'] = QuestionAssociation::select('id','question_association as label')->orderBy("label","ASC")->get();
         $message = "success";
     return response()->json(['status' => true,'message' => $message, 'data' => $data], 200);
     } catch (\Exception $e) {
@@ -29,17 +29,23 @@ class CategoryRepository implements CategoryInterface
 
   public function store(CategoryRequest $request)
     {
-        DB::beginTransaction();
+        
+        $exists = Category::where("job_title",$request->job_title)->first();
 
-        $category = Category::Create([
-            'job_title' => $request->job_title,
-        ]);
+        if(!$exists){
 
-        DB::commit();
+            $category = Category::Create([
+                'job_title' => $request->job_title,
+            ]);
+            
             $responseData['status']=true;
             $responseData['message']='Category created Successfully';
-            $categoryCollection = array("id" => $category['id'], "job_title" => $category->job_title);
-            $responseData['data']=$categoryCollection;
-            return response()->json($responseData);
+
+        }else{
+            $responseData['status']=false;
+            $responseData['message']='Category Name Already Exist';
+        }
+
+        return response()->json($responseData);
     }
 }

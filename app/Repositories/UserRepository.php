@@ -3,37 +3,41 @@
 namespace App\Repositories;
 
 use Mail;
+use DateTime;
+use DatePeriod;
+use DateInterval;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Answer;
 use App\Models\Follow;
 use App\Models\Company;
 use App\Models\Question;
-use App\Models\Postreport;
-use Illuminate\Support\Js;
-use App\Models\RankingList;
 //video report module
-use App\Models\UserProfile;
+use App\Models\Postreport;
 //video report module
 //post report module
-use App\Models\UserSession;
-use App\Models\Videoreport;
-use App\Models\Notification;
+use Illuminate\Support\Js;
+use App\Models\RankingList;
+use App\Models\UserProfile;
 
 //post report module
 //save question module
-use Illuminate\Support\Str;
+use App\Models\UserSession;
 //save question module 
+use App\Models\Videoreport;
+use App\Traits\FirebaseAPI;
+use Illuminate\Support\Str;
+// Admin Profile request
+use App\Models\Notification;
 use App\Models\Savedanswer; 
 use App\Models\CompanyVerify;
 use Illuminate\Support\Carbon;
-// Admin Profile request
 use App\Mail\SendResetPassword;
+
 use App\Interfaces\UserInterface;
 use App\Http\Requests\UserRequest;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\AdminRequest;
-
 use App\Http\Requests\FollowRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -41,8 +45,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
-use App\Traits\FirebaseAPI;
-use DateTime;
 
 class UserRepository implements UserInterface
 {
@@ -236,13 +238,14 @@ class UserRepository implements UserInterface
 
     public function show($id)
     {
-       $userCollection=UserProfile::where('user_id',$id)->select('title','photo','about','location','experience')->first();
+       $userCollection= UserProfile::where('user_id',$id)->select('title','photo','about','location','experience')->first();
 
             $company_id = null;
             $badge_name = null;
        
 			$userName = User::where('id', '=', $id)->select('firstname','lastname','userrole_id','email','id')->first();
             $fname= $userName->firstname;
+            // dd($fname);
             $lname= $userName->lastname;
             $full_name=$fname . ' ' . $lname;
             $mentor_id = $userName->id;
@@ -307,7 +310,7 @@ class UserRepository implements UserInterface
         $answerDetails=[];
         $question_count = 0;
 
-        $questions = Question::where('created_by', '=', $id)->select('id','question')->get();
+        $questions = Question::where('created_by', '=', $id)->select('id','question')->orderBy("created_at","DESC")->get();
         foreach($questions as $questionsAsked)
         {
             $answerdetail['question_id'] =  $questionsAsked->id;
@@ -332,7 +335,7 @@ class UserRepository implements UserInterface
             //save question module
             $saved_question   = Savedanswer::where([["saved_by",Auth::user()->id],["status","Save"]])->
                                 leftjoin("question","question.id","savedanswers.question_id")->
-                                select('savedanswers.question_id','question.question')->get();
+                                select('savedanswers.question_id','question.question')->orderBy('savedanswers.created_at','DESC')->get();
 
             $profileDetails['saved_questions_list']=$saved_question;
             //save question module
@@ -341,10 +344,10 @@ class UserRepository implements UserInterface
        } else if($userName->userrole_id == 1)
        {
         $answerDetails=[];
-        $answers = Answer::where('answer_by', '=', $id)->select('question_id')->get();
+        $answers = Answer::where('answer_by', '=', $id)->select('question_id')->orderBy("created_at","DESC")->get();
         foreach($answers as $answeredQuestions)
         {
-          $questions = Question::where('id', '=', $answeredQuestions->question_id)->select('id','question')->get();
+          $questions = Question::where('id', '=', $answeredQuestions->question_id)->select('id','question')->orderBy("created_at","DESC")->get();
           foreach($questions as $questionsAnswered)
           {
             $answerdetail['question_id'] =  $questionsAnswered->id;
@@ -359,13 +362,13 @@ class UserRepository implements UserInterface
             //save question module
             $saved_question   = Savedanswer::where([["saved_by",Auth::user()->id],["status","Save"]])->
                                 leftjoin("question","question.id","savedanswers.question_id")->
-                                select('savedanswers.question_id','question.question')->get();
+                                select('savedanswers.question_id','question.question')->orderBy("savedanswers.created_at","DESC")->get();
 
             $profileDetails['saved_questions_list']=$saved_question;
             //save question module
         }
 
-        $notification_list = Notification::where([["seen","0"],["user_id",Auth::user()->id]])->get();
+        $notification_list = Notification::where([["seen","0"],["user_id",Auth::user()->id]])->orderBy("created_at","DESC")->get();
 
         $notification_cnt = count($notification_list);
 
@@ -435,9 +438,6 @@ class UserRepository implements UserInterface
         $total_job = Post::where('post_type_id',"2")->count();
         $total_company = DB::table('companies')->count();
 
-
-
-
 // prevoius month of 07 
 // for ($i = 1; $i <= 31; $i++) 
 // {
@@ -445,8 +445,6 @@ class UserRepository implements UserInterface
 // sort($newdate);
 //         }
 // dd($newdate);
-
-
 
 //current week of filter 7 days
 if($date_filter =="thisweek" || !$date_filter){
@@ -457,11 +455,9 @@ if($date_filter =="thisweek" || !$date_filter){
             $getdays[] = date("Y-m-d D", strtotime($i." days ago"));
             sort($getdays);
     }
-    // dd($gettimes);
 }
 //previous week of filter 7 days
-
-elseif($date_filter =="lastweek" || !$date_filter)  {
+elseif($date_filter =="lastweek")  {
     
     for ($i=0; $i<7; $i++)
     {
@@ -471,10 +467,7 @@ elseif($date_filter =="lastweek" || !$date_filter)  {
             $getdays[] = date("Y-m-d D", strtotime($j." days ago"));
             sort($getdays);
     }
-    // dd($gettimes);
-
 // current month of filter 30 days
-    
 }elseif($date_filter =="thismonth"  ){
     for($d=1; $d<=31; $d++)
 {
@@ -486,13 +479,10 @@ elseif($date_filter =="lastweek" || !$date_filter)  {
     if (date('m', $time)==date('m'))
     $getdays[]=date('d', $time);
 }
-// dd($gettimes);
 // previous month of filter 30 days
-
 }
 elseif($date_filter =="lastmonth" )  
 {
-    
     for ($i = 1; $i <= 31; $i++) {
     $gettimes[] = date("Y-m-d", strtotime( date( 'Y-m-01' )." $i days ago"));
     sort($gettimes);
@@ -500,16 +490,38 @@ elseif($date_filter =="lastmonth" )
     $getdays[] = date("d", strtotime( date( 'Y-m-01' )." $i days ago"));
     sort($getdays);
     }
-     
-
 }
+else{
+        $picker = (explode('/' ,$date_filter));
+        $startdate = $picker[0];
+         $enddate = $picker[1];
 
-// $week_month = count($gettimes);
-// dd($week_month);
+        function getBetweenDates($startDate, $endDate) {
+            $array = array();
+            $interval = new DateInterval('P1D');
+         
+            $realEnd = new DateTime($endDate);
+            $realEnd->add($interval);
+         
+            $period = new DatePeriod(new DateTime($startDate), $interval, $realEnd);
+         
+            foreach($period as $date) {
+                $array1[] = $date->format('Y-m-d');
+                $array2[] = $date->format('d');
+            }
 
-        for($i=0; $i<count($gettimes); $i++){
-// $week_month = count($gettimes);
+            $array["times"] = $array1;
+            $array["days"]  = $array2;
+            return $array;
+        }
+        $date_times_array = getBetweenDates($startdate, $enddate);
+        
+        $gettimes = $date_times_array["times"] ;
+        $getdays = $date_times_array["days"];
 
+    }
+    
+for($i=0; $i<count($gettimes); $i++){
 
             $total_hours_mentor =0;
             $total_hours_mentee =0;
@@ -536,15 +548,13 @@ elseif($date_filter =="lastmonth" )
             $logout_time = $menteehours->logout_time;
             $menteehours = round((strtotime($logout_time) - strtotime($login_time))/3600, 1);
             $total_hours_mentee = $total_hours_mentee + $menteehours;
-        //  dd($login_time);
-
          }
 
             $total_mentor_array[$i] = $total_hours_mentor;
             $total_mentee_array[$i] = $total_hours_mentee;
        }
-// dd($total_hours_mentor);
-            if($date_filter == "thismonth" || $date_filter == "lastmonth"){
+
+       if($date_filter == "thismonth" || $date_filter == "lastmonth"){
                 if($date_filter == "thismonth"){
                     $month_num = date('n');
                 }else{
@@ -563,13 +573,10 @@ elseif($date_filter =="lastmonth" )
                 $result[] = ['Weeks','Mentor','Mentee',];
             }
 
-
         $cnt =1;
         for($i=0; $i<count($gettimes); $i++){
             $result[$cnt++]   = [$getdays[$i],$total_mentor_array[$i],$total_mentee_array[$i]];
         }
-    
-
 
             
         return view('pages.dashboard',compact('dashboard', 'total_mentor', 'total_mentee','total_post','total_question','total_answer','total_job','total_company','result','date_filter'));
@@ -1019,12 +1026,20 @@ elseif($date_filter =="lastmonth" )
     {  
 
         $req = Session::put('date_filter',$request->barchart);
-        $charts = Session::get('date_filter',);
-        // $reqs = Session::put('month_filter',$request->barchart);
-        // $chartss = Session::get('month_filter');
+        // $reqt = Session::put('date_filter',[$request->startdate,$request->enddate]);
+
+        $chart = Session::get('date_filter',);
         
         return 1;
     }
+    // public function rangeFilter($request)
+    // {  
+    //     // [ 'first_name' => $request->get('first_name'), 'last_name' => $request->get('last_name');
+    //     $reqt = Session::put('range_filter',[$request->startdate,$request->enddate]);
+    //     $charts = Session::get('range_filter',);
+
+    //     return 1;
+    // }
 
     public function mentorTagList($request){
 

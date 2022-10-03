@@ -54,6 +54,16 @@ class QuestionRepository implements QuestionInterface
       $badge = null;
       $question_count = 0;
       $points         = 15;
+
+      $tag_mentors = $request->mentor_list;
+
+      if($tag_mentors){
+        $tag_mentor_cnt = count($tag_mentors);
+
+        if($tag_mentor_cnt > 4){
+          return response()->json(['status' => false, 'message' => "Permission denied ! Maxmimum 4 members are allowed." ], 500);
+        }
+      }
       
       $question = Question::create([
         'question' => $request->question,
@@ -65,8 +75,7 @@ class QuestionRepository implements QuestionInterface
 
       if($question->id)
       {
-          $tag_mentors = $request->mentor_list;
-
+          
           if($tag_mentors){
             foreach($tag_mentors as $mentor_id){
               Tagmentor::create([
@@ -130,13 +139,17 @@ class QuestionRepository implements QuestionInterface
           ->first();
 
 
-          $questionCollection = Question::where('id',@$upvotedQuestion->question_id)->get();
+          $questionCollection = Question::where('id',@$upvotedQuestion->question_id)->orderBy('created_at',"DESC")->get();
 
           if($questionCollection){
             foreach($questionCollection as $question)
             {
-              $profile_logo = UserProfile::where('id',$question->id)->pluck('photo')->first();
+              $profile_logo = UserProfile::where('user_id',$question->created_by)->pluck('photo')->first();
               $profile_picture = url('api/user/profile/images').'/'.$question->created_by;
+
+              if(!$profile_logo){
+                $profile_picture = null;
+              }
       
               $Answer_link = Answer::where('id',$question->id)->pluck('media')->first();
               $Answer_url = url('/api/question').'/'.$question->id.'/answer';
@@ -150,7 +163,7 @@ class QuestionRepository implements QuestionInterface
               $questionDetails['emotion']=Emotion::where('id',$question->emotion_id)->select("id","emotion")->first();
               $questionDetails['questionAssociation']=QuestionAssociation::where('id',$question->question_association_id)
               ->select("id","question_association")->first();
-              $questionDetails['profile_picture']=isset($profile_logo)?$profile_picture:null;
+              $questionDetails['profile_picture']= $profile_picture;
               //$questionDetails['answers']=isset($Answer_link)?$Answer_url:null;
               array_push($responseData['questions_feeds'],$questionDetails);
             }
@@ -164,9 +177,13 @@ class QuestionRepository implements QuestionInterface
           
           if($questionCollection){
             
-              $profile_logo = UserProfile::where('id',$questionCollection->id)->pluck('photo')->first();
+              $profile_logo = UserProfile::where('user_id',$questionCollection->created_by)->pluck('photo')->first();
               $profile_picture = url('api/user/profile/images').'/'.$questionCollection->created_by;
       
+              if(!$profile_logo){
+                $profile_picture = null;
+              }
+
               $Answer_link = Answer::where('id',$questionCollection->id)->pluck('media')->first();
               $Answer_url = url('/api/question').'/'.$questionCollection->id.'/answer';
       
@@ -179,7 +196,7 @@ class QuestionRepository implements QuestionInterface
               $questionDetails['emotion']=Emotion::where('id',$questionCollection->emotion_id)->select("id","emotion")->first();
               $questionDetails['questionAssociation']=QuestionAssociation::where('id',$questionCollection->question_association_id)
               ->select("id","question_association")->first();
-              $questionDetails['profile_picture']=isset($profile_logo)?$profile_picture:null;
+              $questionDetails['profile_picture']= $profile_picture;
               //$questionDetails['answers']=isset($Answer_link)?$Answer_url:null;
              $responseData['questions_feeds'] = array($questionDetails);
             
@@ -198,9 +215,13 @@ class QuestionRepository implements QuestionInterface
 
           if($questionCollection){
             
-              $profile_logo = UserProfile::where('id',$questionCollection->id)->pluck('photo')->first();
+              $profile_logo = UserProfile::where('user_id',$questionCollection->created_by)->pluck('photo')->first();
               $profile_picture = url('api/user/profile/images').'/'.$questionCollection->created_by;
       
+              if(!$profile_logo){
+                $profile_picture = null;
+              }
+
               $Answer_link = Answer::where('id',$questionCollection->id)->pluck('media')->first();
               $Answer_url = url('/api/question').'/'.$questionCollection->id.'/answer';
       
@@ -213,7 +234,7 @@ class QuestionRepository implements QuestionInterface
               $questionDetails['emotion']=Emotion::where('id',$questionCollection->emotion_id)->select("id","emotion")->first();
               $questionDetails['questionAssociation']=QuestionAssociation::where('id',$questionCollection->question_association_id)
               ->select("id","question_association")->first();
-              $questionDetails['profile_picture']=isset($profile_logo)?$profile_picture:null;
+              $questionDetails['profile_picture']= $profile_picture;
               //$questionDetails['answers']=isset($Answer_link)?$Answer_url:null;
               $responseData['questions_feeds'] = array($questionDetails);
             
@@ -222,11 +243,15 @@ class QuestionRepository implements QuestionInterface
       
           
       }else{
-        $questionCollection=Question::get();
+        $questionCollection=Question::orderBy('created_at',"DESC")->get();
         foreach($questionCollection as $question)
         {
-          $profile_logo = UserProfile::where('id',$question->id)->pluck('photo')->first();
+          $profile_logo = UserProfile::where('user_id',$question->created_by)->pluck('photo')->first();
           $profile_picture = url('api/user/profile/images').'/'.$question->created_by;
+
+          if(!$profile_logo){
+            $profile_picture = null;
+          }
   
           $Answer_link = Answer::where('id',$question->id)->pluck('media')->first();
           $Answer_url = url('/api/question').'/'.$question->id.'/answer';
@@ -240,7 +265,7 @@ class QuestionRepository implements QuestionInterface
           $questionDetails['emotion']=Emotion::where('id',$question->emotion_id)->select("id","emotion")->first();
           $questionDetails['questionAssociation']=QuestionAssociation::where('id',$question->question_association_id)
           ->select("id","question_association")->first();
-          $questionDetails['profile_picture']=isset($profile_logo)?$profile_picture:null;
+          $questionDetails['profile_picture']=$profile_picture;
           //$questionDetails['answers']=isset($Answer_link)?$Answer_url:null;
           array_push($responseData['questions_feeds'],$questionDetails);
         }
@@ -258,7 +283,7 @@ class QuestionRepository implements QuestionInterface
         $searchkey = request()->searchkey;
         $responseData=[];
       $responseData['questions']=[];
-      $questionCollection = Question::where('question', 'LIKE', '%'. $searchkey. '%')->get();
+      $questionCollection = Question::where('question', 'LIKE', '%'. $searchkey. '%')->orderBy("created_at","DESC")->get();
       foreach($questionCollection as $question)
       {
         $questionDetails['id']=$question->id;
@@ -317,7 +342,7 @@ class QuestionRepository implements QuestionInterface
       $mentorCompanyview=User::where('id',auth()->user()->id)->select('id','userrole_id')->first();
       if($mentorCompanyview->userrole_id == '1')
       {
-      $companycollection=Company::where([['user_id',$mentorCompanyview->id],['company_name', 'LIKE', '%'. $searchkey. '%']])->get();
+      $companycollection=Company::where([['user_id',$mentorCompanyview->id],['company_name', 'LIKE', '%'. $searchkey. '%']])->orderBy("created_at","DESC")->get();
       foreach($companycollection as $company)
       {
         $company_logo = Company::where('user_id',$company->user_id)->pluck('logo')->first();
@@ -330,7 +355,7 @@ class QuestionRepository implements QuestionInterface
       }
       } else 
       {
-        $menteecompanycollection=Company::where('company_name', 'LIKE', '%'. $searchkey. '%')->get();
+        $menteecompanycollection=Company::where('company_name', 'LIKE', '%'. $searchkey. '%')->orderBy("created_at","DESC")->get();
           foreach($menteecompanycollection as $menteecompany)
           {
             $company_logo = Company::where('user_id',$menteecompany->user_id)->pluck('logo')->first();
@@ -543,7 +568,7 @@ class QuestionRepository implements QuestionInterface
       {
       $responseData=[];
       $responseData['questions']=[];
-      $questionCollection=Question::get();
+      $questionCollection=Question::orderBy("created_at","DESC")->get();
       foreach($questionCollection as $question)
       {
         $questionDetails['id']=$question->id;
@@ -639,7 +664,7 @@ class QuestionRepository implements QuestionInterface
       $questionDetails['question_association_id'] =$question->question_association_id;
       $questionDetails['question_association'] = $associationDetails;
 
-      $answerCollections = Answer::where('question_id',$question->id)->get();
+      $answerCollections = Answer::where('question_id',$question->id)->orderBy('created_at',"DESC")->get();
       $answerDetails=[];
       $questionDetails['answer']=[];
 
@@ -831,7 +856,7 @@ class QuestionRepository implements QuestionInterface
   public function search($question)
   {
     $responseData=[];
-    $results = Question::where('question', 'LIKE', '%'. $question. '%')->select('question','id')->get();
+    $results = Question::where('question', 'LIKE', '%'. $question. '%')->select('question','id')->orderBy("created_at","DESC")->get();
     foreach($results as $result)
     {
       $searchDetails['id'] = $result->id;
@@ -1128,7 +1153,7 @@ class QuestionRepository implements QuestionInterface
         
       $saved_question   = Savedanswer::where([["saved_by",Auth::user()->id],["status","Save"]])->
                           leftjoin("question","question.id","savedanswers.question_id")->
-                          select('savedanswers.question_id','question.question')->get();
+                          select('savedanswers.question_id','question.question')->orderBy('savedanswers.created_at',"DESC")->get();
 
 
       $responsedData["status"] = true;

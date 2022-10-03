@@ -23,9 +23,11 @@ use App\Http\Controllers\Api\PostManagementController;
 Route::get('/', function () {
     return view('pages.index');
 })->name('admin_login');
+
 Route::get('/admin-login', function () {
     return view('auth.login');
 })->name('login_page');
+
     // Total no.of Mentor and Mentees
     Route::get('dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     
@@ -119,13 +121,14 @@ Route::get('/admin-login', function () {
     //invalid response
 
 
-
     // Display company show detail
     Route::get('logo/{id}',[ImageController::class,'companyLogo'])->name('companieslogo');
-
 
     Route::get('post/media/{post_id}', [MediaImageController::class,'mediaImage'])->name('postmediaImage');
     
     //Bar-Chart
     Route::post('chartfilter',[UserController::class, 'chartFilter'])->name('chartFilter');
+
+    
+
     
