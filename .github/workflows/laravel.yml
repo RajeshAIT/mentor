@@ -1,0 +1,26 @@
+name: Laravel
+
+on:
+  push:
+    branches: [ "staging" ]
+
+
+jobs:
+  laravel-tests:
+
+    runs-on: ubuntu-latest
+
+    steps:
+     - name: Deploy Pranayama Dev Application
+       uses: appleboy/ssh-action@v0.1.2
+       with:
+        host: ${{ secrets.SSH_HOST_STAGE }}
+        username: ${{ secrets.SSH_USERNAME }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        script: |
+          cd /opt/laravel/mentor # navigate into the folder
+          git pull
+          php artisan cache:clear
+          php artisan config:clear
+          php artisan view:clear
+          php artisan route:clear
